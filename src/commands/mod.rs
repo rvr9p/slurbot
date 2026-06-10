@@ -5,12 +5,13 @@ use crate::{
     serenity::{CreateEmbed, User},
     swear::SwearType,
 };
+use indexmap::IndexMap;
 use poise::{
     CreateReply,
     serenity_prelude::{Colour, CreateEmbedAuthor},
 };
 use sqlx::Row;
-use std::collections::HashMap;
+
 #[poise::command(
     slash_command,
     description_localized("en-US", "Displays your or another user's account creation date")
@@ -93,10 +94,11 @@ pub async fn leaderboard(
     .bind(max_entries.unwrap_or(10) as i64)
     .fetch_all(&ctx.data().pool)
     .await?;
-    let mut leaderboard: HashMap<u64, u64> = HashMap::new();
+    let mut leaderboard: IndexMap<u64, u64> = IndexMap::new();
     for i in query_results {
         leaderboard.insert(i.get("user_id"), i.get("swear_score"));
     }
+    leaderboard.sort_by(|_k0, v0, _k1, v1| v0.cmp(v1).reverse());
     let content: String = leaderboard
         .iter()
         .enumerate()

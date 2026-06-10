@@ -1,5 +1,5 @@
 use poise::{CreateReply, serenity_prelude::CreateEmbedAuthor};
-use rand::Rng;
+use rand::{RngExt, rngs::ThreadRng};
 
 use crate::{
     Context, Error, SqlitePool,
@@ -21,7 +21,7 @@ async fn flip(
 ) -> Result<FlipResult, Error> {
     let current_swears = get_user_swears(pool, user_id, guild_id).await?;
     Ok(if current_swears >= bet as i64 {
-        if rand::rng().random_bool(1.0 / 2.0) {
+        if ThreadRng::default().random_bool(1.0 / 2.0) {
             set_user_swears(pool, user_id, guild_id, current_swears + bet as i64).await?;
             FlipResult::Win(bet)
         } else {

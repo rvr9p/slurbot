@@ -2226,8 +2226,9 @@ name = "slur_bot"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "indexmap",
  "poise",
- "rand 0.9.4",
+ "rand 0.10.1",
  "reqwest 0.13.4",
  "serde_json",
  "sqlx",
