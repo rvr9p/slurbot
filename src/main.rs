@@ -9,7 +9,13 @@ use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions as PoolOp
 use std::collections::HashSet;
 use swear::Swear;
 use tracing::debug;
-use types::{Context, Data, Error};
+use types::{Context, DBVersion, Data, Error};
+
+const DB_VERSION: DBVersion = DBVersion {
+    major: 1,
+    minor: 0,
+    patch: 0,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {

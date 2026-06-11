@@ -1,4 +1,5 @@
-use crate::{Error, Swear};
+pub mod migrate;
+use crate::{DB_VERSION, Error, Swear, types::DBVersion};
 use futures::stream::StreamExt;
 use sqlx::{Row, sqlite::SqlitePool};
 use tracing::info;
@@ -12,6 +13,25 @@ async fn table_exists(pool: &SqlitePool, table_name: &str) -> Result<bool, sqlx:
     .await?;
 
     Ok(result)
+}
+
+async fn get_db_version(pool: &SqlitePool) -> Result<DBVersion, Error> {
+    let result = sqlx::query(
+        r#"
+            SELECT version_major, version_minor, version_patch FROM info WHERE id = 0;
+            "#,
+    )
+    .fetch_optional(pool)
+    .await?;
+    if let Some(row) = result {
+        Ok(DBVersion::new(
+            row.get("version_major"),
+            row.get("version_minor"),
+            row.get("version_patch"),
+        ))
+    } else {
+        Ok(DBVersion::default())
+    }
 }
 
 pub async fn initialize(pool: &SqlitePool) -> Result<(), Error> {
@@ -38,7 +58,27 @@ pub async fn initialize(pool: &SqlitePool) -> Result<(), Error> {
     )
     .execute(pool)
     .await?;
-
+    if !table_exists(pool, "info").await? {
+        sqlx::query(
+            r#"
+                CREATE TABLE info (
+                    id INTEGER PRIMARY KEY CHECK (id = 0),
+                    version_major INTEGER NOT NULL,
+                    version_minor INTEGER NOT NULL,
+                    version_patch INTEGER NOT NULL
+                );
+            "#,
+        )
+        .execute(pool)
+        .await?;
+        sqlx::query(
+            r#"
+                INSERT OR REPLACE INTO info (id, version_major, version_minor, version_patch) VALUES (0, 1, 0, 0);
+            "#,
+        )
+        .execute(pool)
+        .await?;
+    }
     if !table_exists(pool, "swears").await? {
         info!("Building Swear Table.");
         sqlx::query(
