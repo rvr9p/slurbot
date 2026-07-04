@@ -1,3 +1,5 @@
+use tracing::info;
+
 use crate::{
     Data, Error,
     db::{add_user_swears, get_swear_list},
@@ -33,8 +35,12 @@ pub async fn event_handler(ctx: &Context, event: &FullEvent, data: &Data) -> Res
             Ok(())
         }
         FullEvent::ReactionAdd { add_reaction } => {
+            info!("{}", add_reaction.emoji.to_string());
+            return Ok(());
             if let Some(message_author_id) = add_reaction.message_author_id {
-                if message_author_id == ctx.cache.current_user().id.get() {
+                if message_author_id == ctx.cache.current_user().id.get()
+                    && add_reaction.emoji.to_string() == "x"
+                {
                     if let Ok(message) = add_reaction.message(&ctx.http).await {
                         message.delete(&ctx.http).await;
                     }
