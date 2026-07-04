@@ -32,6 +32,16 @@ pub async fn event_handler(ctx: &Context, event: &FullEvent, data: &Data) -> Res
             }
             Ok(())
         }
+        FullEvent::ReactionAdd { add_reaction } => {
+            if let Some(message_author_id) = add_reaction.message_author_id {
+                if message_author_id == ctx.cache.current_user().id.get() {
+                    if let Ok(message) = add_reaction.message(&ctx.http).await {
+                        message.delete(&ctx.http).await;
+                    }
+                }
+            }
+            Ok(())
+        }
         _ => Ok(()),
     }
 }
